@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+import color
+
 if TYPE_CHECKING:
     from engine import Engine
     from entity import Actor, Entity
@@ -60,7 +62,6 @@ class ActionWithDirection(Action):
     def target_actor(self) -> Actor | None:
         """Return the actor at this actions destination."""
         return self.engine.game_map.get_actor_at_location(*self.dest_xy)
-    
 
     def perform(self) -> None:
         raise NotImplementedError()
@@ -68,17 +69,25 @@ class ActionWithDirection(Action):
 
 class MeleeAction(ActionWithDirection):
     def perform(self) -> None:
-        if target := self.target_actor:
-            damage = self.entity.fighter.power - target.fighter.defense
-            
-            attack_desc = f"{self.entity.name.capitalize()} attacks {target.name}"
-            if damage > 0:
-                print(f"{attack_desc} for {damage} hit points.")
-                target.fighter.hp -= damage
-            else:
-                print(f"{attack_desc} but does no damage.")
-        else:
+        if not (target := self.target_actor):
             return  # No entity to attack.
+        damage = self.entity.fighter.power - target.fighter.defense
+
+        attack_desc = f"{self.entity.name.capitalize()} attacks {target.name}"
+        attack_color = (
+            color.player_atk if self.entity is self.engine.player else color.enemy_atk
+        )
+        
+        if damage > 0:
+
+            self.engine.message_log.add_message(
+                f"{attack_desc} for {damage} hit points.", attack_color
+            )
+            target.fighter.hp -= damage
+        else:
+            self.engine.message_log.add_message(
+                f"{attack_desc} but does no damage.", attack_color
+            )
 
 
 class MovementAction(ActionWithDirection):
