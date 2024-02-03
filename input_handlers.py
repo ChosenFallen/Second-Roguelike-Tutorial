@@ -118,14 +118,13 @@ class GameOverEventHandler(EventHandler):
             action.perform()
 
     def ev_keydown(self, event: tcod.event.KeyDown) -> Action | None:
-        action: Action | None = None
         key = event.sym
 
-        if key == tcod.event.KeySym.ESCAPE:
-            action = EscapeAction(self.engine.player)
-
-        # No valid action was pressed
-        return action
+        return (
+            EscapeAction(self.engine.player)
+            if key == tcod.event.KeySym.ESCAPE
+            else None
+        )
 
 
 CURSOR_Y_KEYS = {
