@@ -77,7 +77,7 @@ class MeleeAction(ActionWithDirection):
         attack_color = (
             color.player_atk if self.entity is self.engine.player else color.enemy_atk
         )
-        
+
         if damage > 0:
 
             self.engine.message_log.add_message(
