@@ -29,7 +29,9 @@ class Engine:
     def handle_enemy_turns(self) -> None:
         for entity in set(self.game_map.actors) - {self.player}:
             if entity.ai:
-                with contextlib.suppress(exceptions.Impossible): # Ignore imporssible action exceptions from AI.
+                with contextlib.suppress(
+                    exceptions.Impossible
+                ):  # Ignore imporssible action exceptions from AI.
                     entity.ai.perform()
 
     def update_fov(self) -> None:
