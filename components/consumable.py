@@ -10,7 +10,11 @@ from actions import Action, ItemAction
 from components.base_component import BaseComponent
 from entity import Actor
 from exceptions import Impossible
-from input_handlers import AreaRangedAttackHandler, SingleRangedAttackHandler
+from input_handlers import (
+    ActionOrHandler,
+    AreaRangedAttackHandler,
+    SingleRangedAttackHandler,
+)
 
 if TYPE_CHECKING:
     from entity import Actor, Item
@@ -19,7 +23,7 @@ if TYPE_CHECKING:
 class Consumable(BaseComponent):
     parent: Item
 
-    def get_action(self, consumer: Actor) -> actions.Action | None:
+    def get_action(self, consumer: Actor) -> ActionOrHandler | None:
         """Try to return the action for this item."""
         return actions.ItemAction(consumer, self.parent)
 
@@ -42,15 +46,14 @@ class ConfusionConsumable(Consumable):
     def __init__(self, number_of_turns: int) -> None:
         self.number_of_turns = number_of_turns
 
-    def get_action(self, consumer: Actor) -> Action | None:
+    def get_action(self, consumer: Actor) -> SingleRangedAttackHandler:
         self.engine.message_log.add_message(
             "Select a target location.", color.needs_target
         )
-        self.engine.event_handler = SingleRangedAttackHandler(
+        return SingleRangedAttackHandler(
             self.engine,
             callback=lambda xy: actions.ItemAction(consumer, self.parent, xy),
         )
-        return None
 
     def activate(self, action: ItemAction) -> None:
         consumer = action.entity
@@ -97,24 +100,24 @@ class FireballDamageConsumable(Consumable):
     def __init__(self, damage: int, radius: int) -> None:
         self.damage = damage
         self.radius = radius
-        
-    def get_action(self, consumer: Actor) -> Action | None:
+
+    def get_action(self, consumer: Actor) -> AreaRangedAttackHandler:
         self.engine.message_log.add_message(
-            "Select a target location.", color.needs_target,
+            "Select a target location.",
+            color.needs_target,
         )
-        self.engine.event_handler = AreaRangedAttackHandler(
-            self.engine, 
+        return AreaRangedAttackHandler(
+            self.engine,
             radius=self.radius,
             callback=lambda xy: actions.ItemAction(consumer, self.parent, xy),
         )
-        return None
-    
+
     def activate(self, action: ItemAction) -> None:
         target_xy = action.target_xy
-        
+
         if not self.engine.game_map.visible[target_xy]:
             raise Impossible("You cannot target an area that you cannot see.")
-        
+
         targets_hit = False
         for actor in self.engine.game_map.actors:
             if actor.distance(*target_xy) <= self.radius:
@@ -123,11 +126,11 @@ class FireballDamageConsumable(Consumable):
                 )
                 actor.fighter.take_damage(self.damage)
                 targets_hit = True
-        
+
         if not targets_hit:
             raise Impossible("There are no targets in the radius.")
         self.consume()
-        
+
 
 class LightningDamageConsumable(Consumable):
     def __init__(self, damage: int, maximum_range: int) -> None:
