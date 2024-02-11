@@ -11,6 +11,7 @@ if TYPE_CHECKING:
     from components.consumable import Consumable
     from components.fighter import Fighter
     from components.inventory import Inventory
+    from components.level import Level
     from game_map import GameMap
 
 T = TypeVar("T", bound="Entity")
@@ -68,8 +69,8 @@ class Entity:
                 self.gamemap.entities.remove(self)
             self.parent = gamemap
             gamemap.entities.add(self)
-            
-    def distance(self, x: int, y: int) -> float: 
+
+    def distance(self, x: int, y: int) -> float:
         """
         Return the distance between the current and the given (x,y) coordinate.
         """
@@ -93,6 +94,7 @@ class Actor(Entity):
         ai_cls: type[BaseAI],
         fighter: Fighter,
         inventory: Inventory,
+        level: Level,
     ) -> None:
         super().__init__(
             x=x,
@@ -111,6 +113,9 @@ class Actor(Entity):
 
         self.inventory = inventory
         self.inventory.parent = self
+        
+        self.level = level
+        self.level.parent = self
 
     @property
     def is_alive(self) -> bool:
